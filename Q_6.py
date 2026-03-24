@@ -14,3 +14,4 @@ for row in all_rows:
     custname = row[1]
     print(f"{repname:10}\t{custname}")
 db.close()
+
