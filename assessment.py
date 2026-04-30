@@ -1,5 +1,5 @@
 import sqlite3
-db_file = r"C:\Users\bilan\Downloads\parana_25 (2).db"
+db_file ='C:/Users/bilan/Downloads/parana_2025 (2).db'
 db = sqlite3.connect(db_file)
 cursor = db.cursor()
 #setup login
@@ -24,7 +24,7 @@ def _display_options(all_options, title, type):
 #login
 shopper_id = input("Enter shopper ID: ")
 
-cursor.execute("SELECT first_name FROM shoppers WHERE shopper_id = ?", (shopper_id,))
+cursor.execute("SELECT shopper_first_name FROM shoppers WHERE shopper_id = ?", (shopper_id,))
 user = cursor.fetchone()
 
 if not user:
@@ -64,8 +64,14 @@ else:
 def view_orders():
     try:
         cursor.execute("""
-            SELECT o.order_id, o.order_date, p.product_description,
-                   s.seller_name, op.price, op.quantity, op.status
+            SELECT 
+                o.order_id,
+                o.order_date,
+                p.product_description,
+                s.seller_name,
+                op.price,
+                op.quantity,
+                o.order_status
             FROM shopper_orders o
             JOIN ordered_products op ON o.order_id = op.order_id
             JOIN products p ON op.product_id = p.product_id
@@ -74,14 +80,23 @@ def view_orders():
             ORDER BY o.order_date DESC
         """, (shopper_id,))
 
-        orders = cursor.fetchall()
+        rows = cursor.fetchall()
 
-        if not orders:
+        if not rows:
             print("No orders placed by this customer")
-        else:
-            print(f"{'Order':<8}{'Date':<12}{'Product':<25}{'Seller':<15}{'Price':<10}{'Qty':<5}{'Status'}")
-            for o in orders:
-                print(f"{o[0]:<8}{o[1]:<12}{o[2]:<25}{o[3]:<15}£{o[4]:<9.2f}{o[5]:<5}{o[6]}")
+            return
+
+        # Header
+        print(f"{'Order ID':<10} {'Date':<12} {'Product':<25} {'Seller':<20} {'Price':<12} {'Qty':<8} {'Status':<15}")
+        print("-" * 110)
+
+        # Rows
+        for row in rows:
+            product = row[2][:22]
+            seller = row[3][:18]
+
+            print(
+                f"{row[0]:<10} {str(row[1]):<12} {product:<25} {seller:<20} £{float(row[4]):<10.2f} {int(row[5]):<5} {row[6]:<10}")
 
     except Exception as e:
         print("Error retrieving orders:", e)
@@ -91,7 +106,7 @@ def view_orders():
 def add_item():
     global current_basket_id
 
-    cursor.execute("SELECT category_id, category_description FROM product_categories ORDER BY category_description")
+    cursor.execute("SELECT category_id, category_description FROM categories ORDER BY category_description")
     cat_id = _display_options(cursor.fetchall(), "Product Categories", "category")
 
     cursor.execute("""
@@ -274,9 +289,9 @@ def checkout():
             return
 
         cursor.execute("""
-            INSERT INTO shopper_orders (shopper_id, order_date, status)
-            VALUES (?, DATETIME('now'), 'Placed')
-        """, (shopper_id,))
+            INSERT INTO shopper_orders (shopper_id, order_date, order_status)
+            VALUES (?, ?, ?)
+        """, (shopper_id, order_date, order_status))
 
         order_id = cursor.lastrowid
 
