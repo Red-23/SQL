@@ -2,8 +2,6 @@ import sqlite3
 db_file = r"C:\Users\bilan\Downloads\parana_25 (2).db"
 db = sqlite3.connect(db_file)
 cursor = db.cursor()
-cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-print(cursor.fetchall())
 #setup login
 def _display_options(all_options, title, type):
     option_num = 1
